@@ -1,0 +1,11 @@
+# Local eslinter config
+*.eslintrc*
+
+# Dependecy directories
+node_modules/
+
+# dotenv environment variables file
+*.env
+
+# logs
+*.log

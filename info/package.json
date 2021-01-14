@@ -1,0 +1,5 @@
+{
+    "name": "@internal/geminfo",
+    "main": "geminfo.json",
+    "version": "0.0.0"
+}

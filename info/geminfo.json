@@ -1,0 +1,18 @@
+{
+    "Cinnabar": {
+        "Alias": ["Cinnabar","Shinsha"],
+        "Title": "Cinnabar / シンシャ",
+        "Color": "#bd081d",
+        "Description": "Hardness two. Due to the idiosyncratic nature of the inexhaustible release of venom from the body, he is in charge of patrolling the night when the moon does not appear, keeping a distance from other jewels. Intelligent and thoughtful.",
+        "Thumbnail": "http://land-of-the-lustrous.com/core_sys/images/main/top/top_img.png",
+        "Fields": [
+            {"Hardness": "2.0"},
+            {"Mineral": "Sulfide"},
+            {"Chemistry": "HgS"},
+            {"Color": "Red, brownish-red"},
+            {"Job": "Night Patrol"}
+        ],
+        "Image": "http://land-of-the-lustrous.com/core_sys/images/contents/00000005/base/001.png?1534933411",
+        "Footer": "http://land-of-the-lustrous.com/chara/cinnabar.html"
+    }
+}
