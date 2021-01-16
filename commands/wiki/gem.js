@@ -9,6 +9,7 @@ module.exports = class gemInfo extends Command {
             group: 'wiki',
             memberName: 'geminfo',
             description: 'Sends the information for the specified gem',
+            guildOnly: true,
             args: [
                 {
                     key: 'names',
