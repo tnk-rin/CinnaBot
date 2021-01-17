@@ -49,24 +49,24 @@ client.on('message', message => {
     const emote_prefix = '-';
 
     if (message.content.startsWith(emote_prefix)) {   
-        replaceMessageEmote(message);
+        replaceMessageEmotes(message).then(webhook_content => {
+            console.log(message.content, webhook_content);
+            return; 
+        });
     }
 
-    function replaceMessageEmote(message) {
+    async function replaceMessageEmotes(message) {
         // return early if author is bot or no animated emote exists in the server
-        const emotes_animated = message.guild.emojis.cache.filter(emote => emote.animated);
+        const emotes_animated = await message.guild.emojis.cache.filter(emote => emote.animated);
         if (message.author.bot || emotes_animated.size === 0) return;
 
-        /*
-        message contents will be split at backticks, preserving the backticks as empty '' strings if they start and end the message
-        contents will be checked if and only they contain alphanumeric (underscore included)
-        if a replacement is made, the backticks are deleted and the string will be joined from the array with NO spacing
-        */
-        const contentOld = message.content.toLowerCase().slice(1).split(/\`+/);
-        
+        // return early if length < 3, which requires at least one pair of backticks in the message
+        contentOld = message.content.toLowerCase().slice(1).split(/\`/)
+        if (contentOld.length < 3) return;
+
         // perform checks for each substring in the message, if alphanumeric
+        const alphanum = /^[0-9a-zA-z\s\<\>\:]+$/;
         const contentNew = contentOld.map(content => {
-            let alphanum = /^[0-9a-zA-z\s]+$/;
                 if (!content.match(alphanum)) return;
                 for (let emote of emotes_animated.values()) {
                     if (content === emote.name.toLowerCase()) {
@@ -76,13 +76,15 @@ client.on('message', message => {
                 // if no matches were found, return the same content value
                 return content
         });
-        console.log(contentNew.join(''));
 
+        /*
         // replace message if there were any changes made to message contents
         if (contentNew.join('') !== contentOld.join('')) {
             message.delete();
-            message.channel.send(contentNew.join(' '));
+            message.channel.send(contentNew.join(''));
         }
+        */
+        return contentNew.join('');
     }
 });
 
