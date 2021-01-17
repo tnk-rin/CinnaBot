@@ -48,21 +48,46 @@ client.on('message', message => {
 
     const emote_prefix = '-';
 
-    if (message.content.startsWith(emote_prefix)) {   
-        replaceMessageEmotes(message).then(webhook_content => {
-            console.log(message.content, webhook_content);
-            return; 
+    if (message.content.startsWith(emote_prefix)) {
+        replaceMessageEmotes(message).then(async webhook_content => {
+            if (message.content.slice(1) === webhook_content) return;
+            
+            message.delete();
+            // send webhook with message
+            const webhooks = await message.channel.fetchWebhooks();
+            const webhook = webhooks.first();
+
+            let member = message.guild.member(message.author);
+            let nickname = member ? member.displayName : null;
+            let avatar = message.author.displayAvatarURL();
+
+            if (typeof(webhook) === 'undefined') {                
+                // no webhook exists in this channel, so create one
+                message.channel.createWebhook('CinnaBot')
+                    .then(webhook => {
+                        webhook.send(webhook_content, {
+                            username: nickname,
+                            avatarURL: avatar,
+                        });
+                    });
+            } else {
+                // send the content through the existing channel webhook
+                webhook.send(webhook_content, {
+                    username: nickname,
+                    avatarURL: avatar,
+                });
+            }
         });
     }
 
     async function replaceMessageEmotes(message) {
         // return early if author is bot or no animated emote exists in the server
         const emotes_animated = await message.guild.emojis.cache.filter(emote => emote.animated);
-        if (message.author.bot || emotes_animated.size === 0) return;
+        if (message.author.bot || emotes_animated.size === 0) return message.content.slice(1);
 
         // return early if length < 3, which requires at least one pair of backticks in the message
         contentOld = message.content.toLowerCase().slice(1).split(/\`/)
-        if (contentOld.length < 3) return;
+        if (contentOld.length < 3) return message.content.slice(1);
 
         // perform checks for each substring in the message, if alphanumeric
         const alphanum = /^[0-9a-zA-z\s\<\>\:]+$/;
@@ -76,14 +101,7 @@ client.on('message', message => {
                 // if no matches were found, return the same content value
                 return content
         });
-
-        /*
-        // replace message if there were any changes made to message contents
-        if (contentNew.join('') !== contentOld.join('')) {
-            message.delete();
-            message.channel.send(contentNew.join(''));
-        }
-        */
+        
         return contentNew.join('');
     }
 });
