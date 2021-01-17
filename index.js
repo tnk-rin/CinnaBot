@@ -53,34 +53,38 @@ client.on('message', message => {
     }
 
     function replaceMessageEmote(message) {
-        const old_contents = message.content.toLowerCase().slice(1).split(/ +/);
-        const new_contents = [...old_contents];
+        // return early if author is bot or no animated emote exists in the server
         const emotes_animated = message.guild.emojis.cache.filter(emote => emote.animated);
+        if (message.author.bot || emotes_animated.size === 0) return;
 
-        // tries to replace message if author is not a bot and at least one animated emote exists in server
-        if (!message.author.bot && emotes_animated.size != 0) {
-            // perform checks for each substring in the message
-            for (let [key, content] of new_contents.entries()) {
-                // compare the substring to each animated emote
+        /*
+        message contents will be split at backticks, preserving the backticks as empty '' strings if they start and end the message
+        contents will be checked if and only they contain alphanumeric (underscore included)
+        if a replacement is made, the backticks are deleted and the string will be joined from the array with NO spacing
+        */
+        const contentOld = message.content.toLowerCase().slice(1).split(/\`+/);
+        
+        // perform checks for each substring in the message, if alphanumeric
+        const contentNew = contentOld.map(content => {
+            let alphanum = /^[0-9a-zA-z\s]+$/;
+                if (!content.match(alphanum)) return;
                 for (let emote of emotes_animated.values()) {
                     if (content === emote.name.toLowerCase()) {
-                        // if matched, replace the message contents with the emote formatting
-                        // and break out of loop to stop comparing to the emotes
-                        new_contents[key] = `<a:`+emote.name+`:`+emote.id+`>`;
-                        break
+                        return `<a:`+emote.name+`:`+emote.id+`>`;
                     }
                 }
-            }
+                // if no matches were found, return the same content value
+                return content
+        });
+        console.log(contentNew.join(''));
 
-            // only replaces message if the new message content is different
-            if (old_contents != new_contents) {
-                message.delete();
-                message.say(new_contents.join(' '));
-            }
+        // replace message if there were any changes made to message contents
+        if (contentNew.join('') !== contentOld.join('')) {
+            message.delete();
+            message.channel.send(contentNew.join(' '));
         }
     }
 });
-
 
 ///// LOG CLIENT INTO DISCORD
 client.login(process.env.CLIENT_TOKEN);
