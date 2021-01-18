@@ -42,13 +42,10 @@ client.on('error', console.error);
 
 // client read messages
 client.on('message', message => {
-    
-    // const webhooks = message.guild.fetchWebhooks();
-    // console.log(webhooks);
 
-    const emote_prefix = '-';
+    const emotePrefix = '-';
 
-    if (message.content.startsWith(emote_prefix)) {
+    if (message.content.startsWith(emotePrefix)) {
         replaceMessageEmotes(message).then(async webhook_content => {
             if (message.content.slice(1) === webhook_content) return;
             
@@ -82,8 +79,8 @@ client.on('message', message => {
 
     async function replaceMessageEmotes(message) {
         // return early if author is bot or no animated emote exists in the server
-        const emotes_animated = await message.guild.emojis.cache.filter(emote => emote.animated);
-        if (message.author.bot || emotes_animated.size === 0) return message.content.slice(1);
+        const emoteAnimated = await message.guild.emojis.cache.filter(emote => emote.animated);
+        if (message.author.bot || emoteAnimated.size === 0) return message.content.slice(1);
 
         // return early if length < 3, which requires at least one pair of backticks in the message
         contentOld = message.content.toLowerCase().slice(1).split(/\`/)
@@ -93,7 +90,7 @@ client.on('message', message => {
         const alphanum = /^[0-9a-zA-z\s\<\>\:]+$/;
         const contentNew = contentOld.map(content => {
                 if (!content.match(alphanum)) return;
-                for (let emote of emotes_animated.values()) {
+                for (let emote of emoteAnimated.values()) {
                     if (content === emote.name.toLowerCase()) {
                         return `<a:`+emote.name+`:`+emote.id+`>`;
                     }
