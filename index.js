@@ -46,15 +46,16 @@ client.on('message', message => {
     const emotePrefix = '-';
 
     if (message.content.startsWith(emotePrefix)) {
-        replaceMessageEmotes(message)
+        getMessageEmotes(message)
             .then(content => {
                 if (message.content.slice(1) === content) return;
+
                 let webhook_content = content.replace(/\`/g,'');
-                sendEmbedEmotes(message, webhook_content);
+                replaceMessageEmotes(message, webhook_content);
             });
     }
 
-    async function replaceMessageEmotes(message) {
+    async function getMessageEmotes(message) {
         // return early if author is bot
         if (message.author.bot) return message.content.slice(1);
         
@@ -72,7 +73,7 @@ client.on('message', message => {
         // try to match the emote name to every emote in each guild
         const alphanum = /^[a-z0-9\_]+$/i;
 
-        content = content.map(substring => {
+        content = await Promise.all(content.map(async substring => {
             // return backticks for the empty substrings
             if (substring === '') return '\`';
 
@@ -99,18 +100,18 @@ client.on('message', message => {
 
             // return the first emote as a string if multiple matches were found (TEMPORARY)
             if (emotePicker.length > 1) {
-                let emote = emotePicker.map(emote => {
-                    return (emote.animated) ? `<a:${emote.name}:${emote.id}>` : `<:${emote.name}:${emote.id}>`;
-                });
-                return emote[0]
+                emote = await selectMessageEmote(message, emotePicker);
+                return emote;
             };
-        });
-
-        return content.join('');
+        })).then((results) => {
+            return results.join('');
+        })
+        
+        return content;
 
     }
 
-    async function sendEmbedEmotes(message, content) {
+    async function replaceMessageEmotes(message, content) {
         message.delete();
 
         const webhooks = await message.channel.fetchWebhooks();
@@ -136,6 +137,42 @@ client.on('message', message => {
                 avatarURL: avatar,
             });
         }
+    }
+
+    async function selectMessageEmote(message, emoteDuplicate) {
+        let emoteIndex = emoteDuplicate.map((emote, index) => index);
+        let emoteInfo = emoteDuplicate.map((emote, index) => {
+            return (emote.animated) ? `${index}: <a:${emote.name}:${emote.id}> ${emote.guild.name}` : `${index}: <:${emote.name}:${emote.id}> ${emote.guild.name}`
+        })
+        emoteInfo = emoteInfo.join('\n');
+
+        const filter = (msg) => (msg.author.id === message.author.id && emoteIndex.includes(parseInt(msg.content)));
+
+        const reply = await message.reply(`${emoteDuplicate.length} emotes were found with the name ${emoteDuplicate[0].name}.\n`+
+            `Please select the number of the emote you want to use for the replacement. This command will automatically time out in 10 seconds.\n`+
+            `${emoteInfo}`);
+        const pickedEmote = await message.channel.awaitMessages(filter, {max: 1, maxProcessed: 2, time: 10000, errors: ['time']})
+                .then(collected => {
+                    if (collected.size === 0) {
+                        reply.edit(`Error received. Defaulting to first emote.`)
+                        let emote = emoteDuplicate[0];
+                        return (emote.animated) ? `<a:${emote.name}:${emote.id}>` : `<:${emote.name}:${emote.id}>`;
+                    } else {
+                        let emote = collected.map(collect => {
+                            let emotes = emoteDuplicate.filter((emote, index) => index === (parseInt(collect.content)));
+                            return emotes[0];
+                        });
+                        emote = emote[0];
+                        return (emote.animated) ? `<a:${emote.name}:${emote.id}>` : `<:${emote.name}:${emote.id}>` 
+                    }
+                })
+                .catch(() => {
+                    reply.edit(`Error received. Defaulting to first emote.`)
+                    let emote = emoteDuplicate[0];
+                    return (emote.animated) ? `<a:${emote.name}:${emote.id}>` : `<:${emote.name}:${emote.id}>`;
+                })
+        return pickedEmote;
+
     }
 });
 
