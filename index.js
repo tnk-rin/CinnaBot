@@ -46,60 +46,96 @@ client.on('message', message => {
     const emotePrefix = '-';
 
     if (message.content.startsWith(emotePrefix)) {
-        replaceMessageEmotes(message).then(async webhook_content => {
-            if (message.content.slice(1) === webhook_content) return;
-            
-            message.delete();
-            // send webhook with message
-            const webhooks = await message.channel.fetchWebhooks();
-            const webhook = webhooks.first();
-
-            let member = message.guild.member(message.author);
-            let nickname = member ? member.displayName : null;
-            let avatar = message.author.displayAvatarURL();
-
-            if (typeof(webhook) === 'undefined') {                
-                // no webhook exists in this channel, so create one
-                message.channel.createWebhook('CinnaBot')
-                    .then(webhook => {
-                        webhook.send(webhook_content, {
-                            username: nickname,
-                            avatarURL: avatar,
-                        });
-                    });
-            } else {
-                // send the content through the existing channel webhook
-                webhook.send(webhook_content, {
-                    username: nickname,
-                    avatarURL: avatar,
-                });
-            }
-        });
+        replaceMessageEmotes(message)
+            .then(content => {
+                if (message.content.slice(1) === content) return;
+                let webhook_content = content.replace(/\`/g,'');
+                sendEmbedEmotes(message, webhook_content);
+            });
     }
 
     async function replaceMessageEmotes(message) {
-        // return early if author is bot or no animated emote exists in the server
-        const emoteAnimated = await message.guild.emojis.cache.filter(emote => emote.animated);
-        if (message.author.bot || emoteAnimated.size === 0) return message.content.slice(1);
-
-        // return early if length < 3, which requires at least one pair of backticks in the message
-        contentOld = message.content.toLowerCase().slice(1).split(/\`/)
-        if (contentOld.length < 3) return message.content.slice(1);
-
-        // perform checks for each substring in the message, if alphanumeric
-        const alphanum = /^[0-9a-zA-z\s\<\>\:]+$/;
-        const contentNew = contentOld.map(content => {
-                if (!content.match(alphanum)) return;
-                for (let emote of emoteAnimated.values()) {
-                    if (content === emote.name.toLowerCase()) {
-                        return `<a:`+emote.name+`:`+emote.id+`>`;
-                    }
-                }
-                // if no matches were found, return the same content value
-                return content
-        });
+        // return early if author is bot
+        if (message.author.bot) return message.content.slice(1);
         
-        return contentNew.join('');
+        // return early if length of split message contents is less than 3, since a pair of backticks makes it length >= 3
+        let content = message.content.toLowerCase().slice(1).split(/\`/);
+        if (content.length < 3) return message.content.slice(1);
+
+        // get the emotes from each guild
+        let emoteCache = [];
+        let guilds = await message.client.guilds.cache;
+        guilds.forEach(guild => {
+            emoteCache.push(guild.emojis.cache)
+        });
+
+        // try to match the emote name to every emote in each guild
+        const alphanum = /^[a-z0-9\_]+$/i;
+
+        content = content.map(substring => {
+            // return backticks for the empty substrings
+            if (substring === '') return '\`';
+
+            // return substring if not alphanumeric
+            if (substring.match(alphanum) === null) return substring;
+
+            let emotePicker = [];
+            for (let emotes of emoteCache) {
+                emotes.forEach(emote => {
+                    if (substring === emote.name.toLowerCase()) emotePicker.push(emote);
+                });
+            }
+
+            // return the original substring if no matches were found
+            if (emotePicker.length === 0) return substring;
+            
+            // return the first emote as a string if one match was found
+            if (emotePicker.length === 1) {
+                let emote = emotePicker.map(emote => {
+                    return (emote.animated) ? `<a:${emote.name}:${emote.id}>` : `<:${emote.name}:${emote.id}>`;
+                });
+                return emote.join('');
+            };
+
+            // return the first emote as a string if multiple matches were found (TEMPORARY)
+            if (emotePicker.length > 1) {
+                let emote = emotePicker.map(emote => {
+                    return (emote.animated) ? `<a:${emote.name}:${emote.id}>` : `<:${emote.name}:${emote.id}>`;
+                });
+                return emote[0]
+            };
+        });
+
+        return content.join('');
+
+    }
+
+    async function sendEmbedEmotes(message, content) {
+        message.delete();
+
+        const webhooks = await message.channel.fetchWebhooks();
+        const webhook = webhooks.first();
+
+        let member = message.guild.member(message.author);
+        let nickname = member ? member.displayName : null;
+        let avatar = message.author.displayAvatarURL();
+
+        if (typeof(webhook) === 'undefined') {                
+            // no webhook exists in this channel, so create one
+            message.channel.createWebhook('CinnaBot')
+                .then(webhook => {
+                    webhook.send(content, {
+                        username: nickname,
+                        avatarURL: avatar,
+                    });
+                });
+        } else {
+            // send the content through the existing channel webhook
+            webhook.send(content, {
+                username: nickname,
+                avatarURL: avatar,
+            });
+        }
     }
 });
 
