@@ -1,11 +1,10 @@
 {
     "name": "CinnaBot",
-    "version": "1.3.2",
+    "version": "1.4.0",
     "description": "A Discord bot for Cinnabar",
     "main": "index.js",
     "dependencies": {
         "@internal/geminfo": "file:info",
-        "@internal/phrases": "file:personality",
         "discord.js-commando": "git+https://github.com/discordjs/Commando.git",
         "dotenv": "^8.2.0",
         "requires-regex": "^1.0.4"
