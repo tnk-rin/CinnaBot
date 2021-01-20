@@ -5,9 +5,8 @@ const path = require('path');
 
 ///// constants
 const statuses = [
-    {'WATCHING': ['over the moon', 'the ocean', 'over the winter', 'a useless gem', 'the jellyfish']},
-    {'LISTENING': ['the fireflies', 'nothing', 'Sensei']}
-// custom doesn't seem to work    {'CUSTOM': ['useless three and a half', 'i hate phos']}
+    {'WATCHING': ['over the moon', 'the ocean', 'over the winter', 'a useless gem', 'the jellyfish', 'the Lunarians']},
+    {'LISTENING': ['the fireflies', 'the silence', 'Sensei', 'the waves by the shore']}
 ];
 
 

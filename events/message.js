@@ -35,6 +35,10 @@ module.exports = async (client, message) => {
     // return early if author is bot
     if (message.author.bot) return;
     
+    
+    if (message.channel.type === 'dm') return;
+    ///// guild-only events
+
     // check if the OP has mod-like permissions in the current server
     const member = message.guild.member(message.author);
     const memberPerms = member.permissions.toArray();
