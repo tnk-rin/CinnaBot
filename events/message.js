@@ -34,12 +34,19 @@ async function sendMessageWebhook(message, content) {
 module.exports = async (client, message) => {
     // return early if author is bot
     if (message.author.bot) return;
+    
+    // check if the OP has mod-like permissions in the current server
+    const member = message.guild.member(message.author);
+    const memberPerms = member.permissions.toArray();
+    const flags = ['ADMINISTRATOR', 'MANAGE_CHANNELS', 'MANAGE_GUILD', 'MANAGE_ROLES'];
+    const modCheck = memberPerms.some(perm => flags.some(flag => flag === perm));
 
     // Emote replace block
     // Attempt to replace emotes in a message by a non-nitro user by checking the contents of a substring enclosed by a pair of colons, e.g. :emote:
     // To prevent nitro users from using this command, replacement will not be attempted if there is at least one escape character or backtick in the message
-    // Emote names are also case-sensitive, so users must type in the emote as written in the server!
-    if (message.content.split(/\:/).length > 2 && message.content.split(/\`/).length <= 1 && message.content.split(/\\/).length <= 1) {
+    // emote name inputs are case-sensitive! --- overridden by modCheck
+    let emoteCheck = message.content.split(/\:/).length > 2 && message.content.split(/\`/).length <= 1 && message.content.split(/\\/).length <= 1; 
+    if (emoteCheck) {
         const emoteRegex = /<a?:\w+:\d+>|(?<!\\):(\w+):/g;
         let newMessage = message.content.replace(emoteRegex, replaceMessageEmotes);
         // return if there were no changes to the message
@@ -67,7 +74,8 @@ module.exports = async (client, message) => {
     
     function getMatchEmojis(substring, match) {
         // name matches are case-sensitive to prevent nitro users from using this command
-        let name = emote => emote.name === match;
+        // modCheck overrides this restriction
+        let name = emote => (modCheck) ? emote.name.toLowerCase() === match.toLowerCase() : emote.name === match;
         // prioritize the first emote found in the messaged server, otherwise get the first match in other servers
         let emoteMatch = message.guild.emojis.cache.find(name);
         if (!emoteMatch) {
