@@ -98,8 +98,9 @@ module.exports = (client, message) => {
     /* Purpose: replace emotes in a message by a non-nitro user by checking the contents of a substring enclosed by a pair of colons, e.g. :emote:
         An emote is eligible for replacement if it includes two colons,
         as the array formed by splitting the message by colons will have a length greater than 2 if there are at least two colins in the message
+        However, if there are at least 2 backticks in the message, this command will abort (due to difficulty parsing out the necessary emotes inside/outside the code markup)
     */
-    if (message.content.split(/\:/).length > 2) {
+    if (message.content.split(/\:/).length > 2 && message.content.split(/\`/).length <= 2) {
         checkMessageEmotes(message)
             .then(canReplace => {
                 // return if no eligible emotes were found
