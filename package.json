@@ -1,12 +1,26 @@
 {
     "name": "CinnaBot",
-    "version": "1.4.0",
-    "description": "A Discord bot for Cinnabar",
+    "version": "2.0.0",
+    "description": "Cinnabar has entered the Gem to Lunarian transformation machine.",
     "main": "index.js",
+    "author": "Kazumik",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Kazumik0108/CinnaBot"
+    },
+    "homepage": "https://github.com/Kazumik0108/CinnaBot#readme",
+    "bugs": {
+        "url": "https://github.com/Kazumik0108/CinnaBot/issues"
+    },
     "dependencies": {
-        "@internal/geminfo": "file:info",
         "discord.js-commando": "git+https://github.com/discordjs/Commando.git",
         "dotenv": "^8.2.0",
+        "fs": "0.0.1-security",
+        "path": "^0.12.7",
         "requires-regex": "^1.0.4"
+    },
+    "engines": {
+        "node": "14.15.4",
+        "npm": "6.14.10"
     }
 }

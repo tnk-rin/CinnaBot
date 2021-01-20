@@ -1,9 +1,6 @@
-// call in required modules
-// call in config file
-const { config } = require('dotenv');
-config({
-    path: `${__dirname}/process.env`
-})
+// emotelist.js
+
+///// imports
 const { Command } = require('discord.js-commando');
 
 module.exports = class gemInfo extends Command {

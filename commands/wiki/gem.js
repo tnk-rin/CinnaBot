@@ -1,6 +1,9 @@
-const { MessageEmbed } = require('discord.js');
-const { Command } = require('discord.js-commando');
-const { Gems } = require('@internal/geminfo');
+// gem.js
+
+///// imports
+const path = require('path');
+const { Command, MessageEmbed } = require('discord.js-commando');
+const { Gems } = require(path.join(__dirname,'../../info/geminfo.json'));
 
 module.exports = class gemInfo extends Command {
     constructor(client) {
