@@ -1,49 +1,11 @@
 // message.js
 
 ///// functions
-async function sendMessageWebhook(message, content) {
-    // Deletes the OP's message and sends a webhook mimicking the OP
-    message.delete();
-    const webhooks = await message.channel.fetchWebhooks();
-    const webhook = webhooks.first();
-
-    // get user info from the message
-    const member = message.guild.member(message.author);
-    const nickname = member ? member.displayName : null;
-    const avatar = message.author.displayAvatarURL();
-
-    if (typeof(webhook) === 'undefined') {                
-        // no webhook exists in this channel, so create one
-        message.channel.createWebhook('CinnaBot')
-            .then(webhook => {
-                webhook.send(content, {
-                    username: nickname,
-                    avatarURL: avatar,
-                });
-            });
-    } else {
-        // send the content through the existing channel webhook
-        webhook.send(content, {
-            username: nickname,
-            avatarURL: avatar,
-        });
-    }
-}
 
 ///// exports
 module.exports = async (client, message) => {
-    // return early if author is bot
-    if (message.author.bot) return;
-    
-    
-    if (message.channel.type === 'dm') return;
-    ///// guild-only events
-
-    // check if the OP has mod-like permissions in the current server
-    const member = message.guild.member(message.author);
-    const memberPerms = member.permissions.toArray();
-    const flags = ['ADMINISTRATOR', 'MANAGE_CHANNELS', 'MANAGE_GUILD', 'MANAGE_ROLES'];
-    const modCheck = memberPerms.some(perm => flags.some(flag => flag === perm));
+    // return early if author is bot or the message is in a DM
+    if (message.author.bot || message.channel.type === 'dm') return;
 
     // Emote replace block
     // Attempt to replace emotes in a message by a non-nitro user by checking the contents of a substring enclosed by a pair of colons, e.g. :emote:
@@ -57,10 +19,6 @@ module.exports = async (client, message) => {
         if (message.content === newMessage) return;
         await sendMessageWebhook(message, newMessage);
     }
-
-
-
-
 
 
     ///// functions
@@ -77,14 +35,56 @@ module.exports = async (client, message) => {
     }
     
     function getMatchEmojis(substring, match) {
-        // name matches are case-sensitive to prevent nitro users from using this command
-        // modCheck overrides this restriction
-        let name = emote => (modCheck) ? emote.name.toLowerCase() === match.toLowerCase() : emote.name === match;
+        const nameFunction = emote => emote.name.toLowerCase() === match.toLowerCase();
         // prioritize the first emote found in the messaged server, otherwise get the first match in other servers
-        let emoteMatch = message.guild.emojis.cache.find(name);
+        let emoteMatch = message.guild.emojis.cache.find(nameFunction);
         if (!emoteMatch) {
-            emoteMatch = client.guilds.cache.flatMap(guild => guild.emojis.cache).find(name);
+            emoteMatch = client.guilds.cache.flatMap(guild => guild.emojis.cache).find(nameFunction);
         }
         return emoteMatch;
+    }
+
+    async function sendMessageWebhook(message, content) {
+        // Deletes the OP's message and sends a webhook mimicking the OP
+        // Function requires the bot to have MANAGE_MESSAGES and MANAGE_WEBHOOKS permissions
+        const bot = message.guild.member(client.user);
+        const botPerms = bot.permissions.toArray();
+        let botFlags = ['MANAGE_MESSAGES', 'MANAGE_WEBHOOKS'];
+        botFlags = botFlags.filter(flag => !botPerms.some(perm => perm === flag));
+        if (botFlags.length > 0) return message.reply(`I am missing \`${botFlags}\` permissions in this server for this command.`);
+
+        // Function also requires @everyone to have USE_EXTERNAL_EMOJIS permissions
+        const everyone = message.guild.roles.cache.find(role => role.name === '@everyone');
+        const everyonePerms = everyone.permissions.toArray();
+        let everyoneFlags = ['USE_EXTERNAL_EMOJIS'];
+        everyoneFlags = everyoneFlags.filter(flag => !everyonePerms.some(perm => perm === flag));
+        if (everyoneFlags.length > 0) return message.reply(`the role \`\@everyone\` is missing \`${everyoneFlags}\` permissions in this server for this command.`);
+
+        // bot & @everyone has required permissions if the code reaches this block
+        message.delete();
+        const webhooks = await message.channel.fetchWebhooks();
+        const webhook = webhooks.first();
+    
+        // get user info from the message
+        const member = message.guild.member(message.author);
+        const nickname = member ? member.displayName : null;
+        const avatar = message.author.displayAvatarURL();
+    
+        if (typeof(webhook) === 'undefined') {                
+            // no webhook exists in this channel, so create one
+            message.channel.createWebhook('CinnaBot')
+                .then(webhook => {
+                    webhook.send(content, {
+                        username: nickname,
+                        avatarURL: avatar,
+                    });
+                });
+        } else {
+            // send the content through the existing channel webhook
+            webhook.send(content, {
+                username: nickname,
+                avatarURL: avatar,
+            });
+        }
     }
 };
