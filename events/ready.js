@@ -1,8 +1,12 @@
 // ready.js
 
 ///// imports
+const { config } = require("dotenv");
+config({path: `${__dirname}/process.env`});
+const { access } = require("fs");
 const path = require("path");
-const { reactionroles } = require("../config.json");
+const Twit = require("twit");
+const { reactionroles, twitterstreams } = require("../config.json");
 
 ///// constants
 const statuses = [
@@ -10,6 +14,12 @@ const statuses = [
     {"LISTENING": ["the fireflies", "the silence", "Sensei", "the waves by the shore"]}
 ];
 
+const TwitterBot = new Twit({
+    consumer_key: process.env.API_KEY,
+    consumer_secret: process.env.API_KEY_SECRET,
+    access_token: process.env.ACCESS_TOKEN,
+    access_token_secret: process.env.ACCESS_TOKEN_SECRET
+});
 
 ///// functions
 function startUpMessages(client) {
@@ -50,6 +60,25 @@ module.exports = async (client) => {
                     .catch(console.error)
             }
         }
+    }
+
+    // create the various twitter streams to post content their specified Discord channels
+    const streams = {};
+    for (let user in twitterstreams) {
+        streams[user] = TwitterBot.stream("statuses/filter", {follow: user});
+        streams[user].on("tweet", function (tweet) {
+            let url = "https://twitter.com/" + tweet.user.screen_name + "/status/" + tweet.id_str;
+            twitterstreams[user].forEach(channelID => {
+                try {
+                    client.channels.fetch(channelID).then(channel => {
+                        channel.send(url);
+                    }).catch(console.error)
+                } catch (error) {
+                    console.log(error);
+                }
+            });
+        });
+        console.log(`Stream event has successfully been created for Twitter ID ${user}`);
     }
 
     async function setStatus() {
