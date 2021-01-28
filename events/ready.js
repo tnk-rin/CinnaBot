@@ -1,12 +1,13 @@
 // ready.js
 
 ///// imports
-const path = require('path');
+const path = require("path");
+const { reactionroles } = require("../config.json");
 
 ///// constants
 const statuses = [
-    {'WATCHING': ['over the moon', 'the ocean', 'over the winter', 'a useless gem', 'the jellyfish', 'the Lunarians']},
-    {'LISTENING': ['the fireflies', 'the silence', 'Sensei', 'the waves by the shore']}
+    {"WATCHING": ["over the moon", "the ocean", "over the winter", "a useless gem", "the jellyfish", "the Lunarians"]},
+    {"LISTENING": ["the fireflies", "the silence", "Sensei", "the waves by the shore"]}
 ];
 
 
@@ -31,13 +32,25 @@ module.exports = async (client) => {
     client.registry
         .registerDefaultTypes()
         .registerGroups([
-            ['emote', 'Emote and Reaction Commands'],
-            ['wiki', 'Gem Wiki Information'],
+            ["server", "Server Function Commands"],
+            ["emote", "Emote and Reaction Commands"],
+            ["wiki", "Gem Wiki Information"],
         ])
         .registerDefaultGroups()
         .registerDefaultCommands()
         .registerCommandsIn(path.join(__dirname,`../`,`/commands`));
 
+    // reaction roles: put messages into cache from each guild
+    for (let guildID in reactionroles) {
+        for (let channelID in reactionroles[guildID]) {
+            let channel = await client.channels.cache.get(channelID);
+            for (let messageID in reactionroles[guildID][channelID]) {
+                channel.messages.fetch(messageID, true, false)
+                    .then(message => console.log(`Added message id ${message.id} to the cache from server ${message.guild.name} in channel ${message.channel.name}.`))
+                    .catch(console.error)
+            }
+        }
+    }
 
     async function setStatus() {
         // randomly choose a status group
@@ -51,7 +64,7 @@ module.exports = async (client) => {
         status = status[0][Math.floor(Math.random() * status[0].length)];
     
         client.user.setActivity(status, {type: statusType})
-            .then(presence => console.log(`\nActivity set to \'${presence.activities[0].type} ${presence.activities[0].name}\'`))
+            .then(presence => console.log(`\nActivity set to \"${presence.activities[0].type} ${presence.activities[0].name}\"`))
             .catch(console.error);
     }
 };

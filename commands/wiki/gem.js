@@ -1,23 +1,24 @@
 // gem.js
 
 ///// imports
-const path = require('path');
-const { Command, MessageEmbed } = require('discord.js-commando');
-const { Gems } = require(path.join(__dirname,'../../info/geminfo.json'));
+const path = require("path");
+const { MessageEmbed } = require("discord.js");
+const { Command } = require("discord.js-commando");
+const { Gems } = require(path.join(__dirname,"../../info/geminfo.json"));
 
 module.exports = class gemInfo extends Command {
     constructor(client) {
         super(client, {
-            name: 'gem',
-            group: 'wiki',
-            memberName: 'gem',
-            description: 'Sends the information for the specified gem',
+            name: "gem",
+            group: "wiki",
+            memberName: "gem",
+            description: "Sends the information for the specified gem",
             guildOnly: true,
             args: [
                 {
-                    key: 'names',
-                    prompt: 'Which gem(s) would you to see? Separate names with a space.',
-                    type: 'string'
+                    key: "names",
+                    prompt: "Which gem(s) would you to see? Separate names with a space.",
+                    type: "string"
                 },
             ],
         });
