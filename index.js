@@ -18,10 +18,10 @@ const client = new CommandoClient({
 
 
 ///// read client event files
-fs.readdir('./Events/', (error, files) => {
+fs.readdir('./events/', (error, files) => {
     if (error) return console.log(error);
     files.forEach(file => {
-        let event = require(`./Events/${file}`);
+        let event = require(`./events/${file}`);
         let eventName = file.split('.')[0];
         client.on(eventName, event.bind(null, client));
     });
