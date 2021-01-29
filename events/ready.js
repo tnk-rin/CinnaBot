@@ -67,6 +67,8 @@ module.exports = async (client) => {
     for (let user in twitterstreams) {
         streams[user] = TwitterBot.stream("statuses/filter", {follow: user});
         streams[user].on("tweet", function (tweet) {
+            // ignore other users retweeting or quoting the original tweet by the followed user
+            if (tweet.retweeted_status || tweet.quoted_status) return;
             let url = "https://twitter.com/" + tweet.user.screen_name + "/status/" + tweet.id_str;
             twitterstreams[user].forEach(channelID => {
                 try {
